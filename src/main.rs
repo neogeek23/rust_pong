@@ -29,6 +29,7 @@ fn main() -> amethyst::Result<()> {
     )?;
 
     let mut game = Application::new("./", Pong, game_data)?;
-
+    
+    game.run();
     Ok(())
 }
