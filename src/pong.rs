@@ -4,7 +4,7 @@ use amethyst::core::transform::Transform;
 use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use amethyst::prelude::*;
 use amethyst::renderer::{
-    Camera, PngFormat, Projection, SpriteRender, SpriteSheet,
+    Camera, PngFormat, Projection, SpriteRender, SpriteSheet, Flipped,
     SpriteSheetFormat, SpriteSheetHandle, Texture, TextureMetadata,
 };
 
@@ -19,12 +19,12 @@ pub struct Pong;
 impl SimpleState for Pong {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         let world = data.world;
+        let sprite_sheet_handle = load_sprite_sheet(world);
 
         world.register::<Paddle>();
-        initialise_paddles(world);
+        initialise_paddles(world, sprite_sheet_handle);
         initialise_camera(world);
     }
-    
 }
 
 #[derive(PartialEq, Eq)]
@@ -69,7 +69,7 @@ fn initialise_camera(world: &mut World) {
 }
 
 /// Initialises one paddle on the left, and one paddle on the right.
-fn initialise_paddles(world: &mut World) {
+fn initialise_paddles(world: &mut World, sprite_sheet: SpriteSheetHandle){
     let mut left_transform = Transform::default();
     let mut right_transform = Transform::default();
 
@@ -78,9 +78,15 @@ fn initialise_paddles(world: &mut World) {
     left_transform.set_xyz(PADDLE_WIDTH * 0.5, y, 0.0);
     right_transform.set_xyz(ARENA_WIDTH - PADDLE_WIDTH * 0.5, y, 0.0);
 
+    let sprite_render = SpriteRender {
+        sprite_sheet: sprite_sheet.clone(),
+        sprite_number: 0, // paddle is the first sprite in the sprite_sheet
+    };
+
     // Create a left plank entity.
     world
         .create_entity()
+        .with(sprite_render.clone())
         .with(Paddle::new(Side::Left))
         .with(left_transform)
         .build();
@@ -88,6 +94,8 @@ fn initialise_paddles(world: &mut World) {
     // Create right plank entity.
     world
         .create_entity()
+        .with(sprite_render.clone())
+        .with(Flipped::Horizontal)
         .with(Paddle::new(Side::Right))
         .with(right_transform)
         .build();
@@ -108,4 +116,15 @@ fn load_sprite_sheet(world: &mut World) -> SpriteSheetHandle {
             &texture_storage,
         )
     };
+
+    let loader = world.read_resource::<Loader>();
+    let sprite_sheet_store = world.read_resource::<AssetStorage<SpriteSheet>>();
+    loader.load(
+        "texture/pong_spritesheet.ron", // Here we load the associated ron file
+        SpriteSheetFormat,
+        texture_handle, // We pass it the handle of the texture we want it to use
+        (),
+        &sprite_sheet_store,
+    )
+
 }
