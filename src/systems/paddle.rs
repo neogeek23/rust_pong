@@ -21,7 +21,7 @@ impl<'s> System<'s> for PaddleSystem {
         Side::Right => input.axis_value("right_paddle"),
       };
       if let Some(mv_amount) = movement {
-        let scaled_amount = 1.2 * mv_amount as f32;
+        let scaled_amount = 2.0 * mv_amount as f32;
         let paddle_y = transform.translation().y;
         transform.set_y(
             (paddle_y + scaled_amount)
